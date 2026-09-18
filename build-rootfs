@@ -111,6 +111,27 @@ def inject_yumrepos(srcdir):
             continue
         os.unlink(repo)
 
+    # Patch hermetic repo to add gpgkey directive if missing
+    if IS_HERMETIC and os.path.exists(HERMETIC_REPO):
+        gpgkey_path = 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release'
+        with open(HERMETIC_REPO, 'r') as f:
+            content = f.read()
+        # Only patch if gpgkey is not already present
+        if 'gpgkey' not in content:
+            content = content.replace(
+                'gpgcheck = 1',
+                f'gpgcheck = 1\ngpgkey = {gpgkey_path}'
+            )
+            with open(HERMETIC_REPO, 'w') as f:
+                f.write(content)
+            print(f"Patched {HERMETIC_REPO} to add gpgkey directive")
+
+        # Import the GPG key into the RPM database
+        gpgkey_file = '/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release'
+        if os.path.exists(gpgkey_file):
+            subprocess.run(['rpm', '--import', gpgkey_file], check=True)
+            print(f"Imported GPG key from {gpgkey_file}")
+
     # and now inject our repos
     if not IS_HERMETIC:
         # Copy the secret repo if it exists (mounted via --mount=type=secret)
