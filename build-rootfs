@@ -106,9 +106,6 @@ def get_treefile(manifest_path, osid, stream, version):
 def inject_yumrepos(srcdir):
     # first delete all the default repos
     for repo in glob.glob('/etc/yum.repos.d/*.repo'):
-        if os.path.basename(repo) == 'secret.repo' and not IS_HERMETIC:
-            # this is a supported podman secret to inject repo files; see Containerfile
-            continue
         if repo == HERMETIC_REPO:
             # this is the repo Konflux injects when hermetic build is enabled
             continue
@@ -116,6 +113,11 @@ def inject_yumrepos(srcdir):
 
     # and now inject our repos
     if not IS_HERMETIC:
+        # Copy the secret repo if it exists (mounted via --mount=type=secret)
+        secret_repo = '/run/secrets/yumrepos'
+        if os.path.exists(secret_repo):
+            shutil.copy(secret_repo, '/etc/yum.repos.d/secret.repo')
+        # Copy any other repo files from srcdir
         for repo in glob.glob(f'{srcdir}/*.repo'):
             shutil.copy(repo, "/etc/yum.repos.d")
 
