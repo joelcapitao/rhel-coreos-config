@@ -1,0 +1,15 @@
+---
+# Register Atomic Tekton task bundles as trusted in Enterprise Contract.
+#
+# This file is referenced as a data source in Calunga's EC policies so that
+# Conforma can verify the build task without maintaining a separate
+# data-acceptable-bundles OCI artifact.  See ADR 0053 for background:
+# https://konflux-ci.dev/architecture/ADR/0053-trusted-task-model/
+#
+# Consumed by ECP e.g. calunga-npm / index policies via:
+#   github.com/calungaproject/plumbing//policy-data?ref=main
+rule_data:
+  trusted_task_rules:
+    allow:
+      pipeline-buildah-build-bootc-multi-platform-tasks:
+        - pattern: "oci://quay.io/bootc-devel/tekton-catalog/task-prepare-build-context:*"
